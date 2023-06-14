@@ -50,13 +50,12 @@ impl Client {
     async fn upload<O>(
         &self,
         object: O,
-        name: &str,
+        filename: String,
         acl: Option<PredefinedObjectAcl>,
     ) -> Result<(), Error>
     where
         O: Serialize,
     {
-        let filename = format!("{}.yaml", name);
         match self.client.upload_object(
             &UploadObjectRequest {
                 bucket: self.bucket.clone(),
@@ -76,12 +75,11 @@ impl Client {
 
     async fn download<O>(
         &self,
-        name: &str,
+        filename: String,
     ) -> Result<O, Error>
     where
         for<'de> O: Deserialize<'de>,
     {
-        let filename = format!("{}.yaml", name);
         match self.client.download_object(
             &GetObjectRequest {
                 bucket: self.bucket.clone(),
@@ -111,7 +109,7 @@ impl Client {
     where
         O: Serialize,
     {
-        self.upload(object, name, self.json_acl.clone()).await
+        self.upload(object, json_filename(name), self.json_acl.clone()).await
     }
 
     pub (crate) async fn upload_items<O>(
@@ -122,7 +120,7 @@ impl Client {
     where
         O: Serialize,
     {
-        self.upload(object, name, self.item_acl.clone()).await
+        self.upload(object, items_filename(name), self.item_acl.clone()).await
     }
     
     pub (crate) async fn download_json<O>(
@@ -132,7 +130,7 @@ impl Client {
     where
         for<'de> O: Deserialize<'de>,
     {
-        self.download(name).await
+        self.download(json_filename(name)).await
     }
 
     pub (crate) async fn download_items<O>(
@@ -142,6 +140,14 @@ impl Client {
     where
         for<'de> O: Deserialize<'de>,
     {
-        self.download(name).await
+        self.download(items_filename(name)).await
     }
+}
+
+fn json_filename(name: &str) -> String {
+    format!("{}_json.yaml", name)
+}
+
+fn items_filename(name: &str) -> String {
+    format!("{}_items.yaml", name)
 }
